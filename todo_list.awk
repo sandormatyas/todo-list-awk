@@ -8,9 +8,11 @@ BEGIN { FS=",";
 	print "5 - delete task";
 	printf "Select an option: ";
 	getline option < "-";
+
 	"date +%Y-%m-%d" | getline today;
         "date --date=\"next day\" +%Y-%m-%d" | getline tomorrow;
 	"date +%W" | getline this_week;
+
         if ( option == 4 ) {
 	  printf "Enter new task: "
           getline task < "-";
@@ -18,7 +20,11 @@ BEGIN { FS=",";
 	  getline due_date < "-";
 	  command="date -d " due_date " +%Y-%m-%d"
 	  command | getline due_date
-        }
+        } else if ( option == 5 ) {
+	  system("touch .temp")
+	  printf "Enter task you want to delete: "
+	  getline id_to_delete < "-"
+	}
 }
 { if (option == 1 && today == $3) {
     print $2;
@@ -30,10 +36,16 @@ BEGIN { FS=",";
     if (this_week == task_week) {
     print $2;
     }
+  } else if (option == 5 && $1 != id_to_delete) {
+    print >> ".temp"
   }
 }
 END {
   if (option == 4) {
-    print ++NR "," task "," due_date  >> FILENAME
+    print ++NR "," task "," due_date  >> FILENAME ## ++NR is NOT a good solution because if a row is deleted then you get duplicate ids
+  } else if (option == 5) {
+      command="cat .temp > " FILENAME
+      system(command)
+      system("rm .temp")
   }
 }
